@@ -4,6 +4,9 @@ import { createPatientInput } from "./user.interface";
 import bcryptjs from "bcryptjs"
 import { fileUpload } from "../../helper/fileUploader";
 import { UploadApiResponse } from "cloudinary";
+import { Prisma } from "@prisma/client";
+import { userSearchableFields } from "./user.constant";
+import { calculatePagination } from "../../helper/paginationHelper";
 
 const createPatient = async (req: Request) => {
 
@@ -35,6 +38,49 @@ const createPatient = async (req: Request) => {
 
 }
 
+const getAllUser = async (params: any, options: any) => {
+    const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+    const { searchTerm, ...filterData } = params;
+
+    const andCondition: Prisma.UserWhereInput[] = []
+
+    if (searchTerm) {
+        andCondition.push({
+            OR: userSearchableFields.map(field => ({
+                [field]: {
+                    contains: searchTerm,
+                    mode: "insensitive"
+                }
+            }))
+        })
+    }
+
+    if (Object.keys(filterData).length > 0) {
+        andCondition.push({
+            AND: Object.keys(filterData).map(key => ({
+                [key]: {
+                    equals: { filterData }[key]
+                }
+            }))
+        })
+    }
+
+
+    const res = await prisma.user.findMany({
+        skip,
+        take: limit,
+        where: {
+            AND: andCondition
+        },
+        orderBy: {
+            [sortBy]: sortOrder
+        },
+
+    });
+    return res;
+}
+
 export const userService = {
-    createPatient
+    createPatient,
+    getAllUser
 } 

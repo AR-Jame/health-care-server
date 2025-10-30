@@ -13,6 +13,8 @@ router.post(
         next()
     },
     userController.createPatient
-)
+);
+
+router.get("/", userController.getAllUser)
 
 export const userRoutes = router;
