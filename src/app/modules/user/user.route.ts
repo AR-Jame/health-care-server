@@ -9,11 +9,21 @@ router.post(
     "/create-patient",
     fileUpload.upload.single("file"),
     (req: Request, res: Response, next: NextFunction) => {
-        req.body = userValidation.createPatientValidationSchema.parse(JSON.parse(req.body.data))
+        req.body = userValidation.createPatientValidationSchema.parse(JSON.parse(req.body?.data))
         next()
     },
     userController.createPatient
 );
+
+router.post(
+    "/create-doctor",
+    fileUpload.upload.single("file"),
+    (req: Request, res: Response, next: NextFunction) => {
+        req.body = userValidation.createDoctorValidationSchema.parse(JSON.parse(req.body.data))
+        next()
+    },
+    userController.createDoctor
+)
 
 router.get("/", userController.getAllUser)
 

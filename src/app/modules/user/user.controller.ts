@@ -3,6 +3,7 @@ import catchAsync from "../../shared/catchAsync";
 import { userService } from "./user.service";
 import sendResponse from "../../shared/sendResponse";
 import pick from "../../helper/pick";
+import { userFilterableFields, userSearchableFields } from "./user.constant";
 
 const createPatient = catchAsync(async (req: Request, res: Response) => {
     const patient = await userService.createPatient(req)
@@ -15,12 +16,23 @@ const createPatient = catchAsync(async (req: Request, res: Response) => {
     })
 })
 
+const createDoctor = catchAsync(async (req: Request, res: Response) => {
+
+    const result = await userService.createDoctor(req);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Doctor created successfully",
+        data: result
+    })
+})
+
 const getAllUser = catchAsync(async (req: Request, res: Response) => {
 
     const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"])
-    const filters = pick(req.query, ["status", "role", "email"])
 
-    console.log(options);
+    const filters = pick(req.query, userFilterableFields)
 
     const result = await userService.getAllUser(filters, options)
 
@@ -35,5 +47,6 @@ const getAllUser = catchAsync(async (req: Request, res: Response) => {
 
 export const userController = {
     createPatient,
+    createDoctor,
     getAllUser
 }
