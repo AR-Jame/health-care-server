@@ -28,6 +28,18 @@ const createDoctor = catchAsync(async (req: Request, res: Response) => {
     })
 })
 
+const createAdmin = catchAsync(async (req: Request, res: Response) => {
+
+    const result = await userService.createAdmin(req);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Admin created successfully",
+        data: result
+    })
+})
+
 const getAllUser = catchAsync(async (req: Request, res: Response) => {
 
     const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"])
@@ -48,5 +60,6 @@ const getAllUser = catchAsync(async (req: Request, res: Response) => {
 export const userController = {
     createPatient,
     createDoctor,
+    createAdmin,
     getAllUser
 }
