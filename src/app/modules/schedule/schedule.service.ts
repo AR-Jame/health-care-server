@@ -1,5 +1,7 @@
 import { addDays, addMinutes, format, isBefore, setHours, setMinutes } from "date-fns";
 import { prisma } from "../../shared/prisma";
+import { calculatePagination } from "../../helper/paginationHelper";
+import { Prisma } from "@prisma/client";
 
 //********** My problemetic solution */ 
 // const createSchedule = async (payload: any) => {
@@ -149,7 +151,61 @@ const createSchedule = async (payload: any) => {
     return result;
 };
 
+const scheduleForDoctor = async (options: any, filters: any) => {
+    const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+
+    const { startDateTime: filterStartDateTime, endDateTime: filterEndDateTime } = filters;
+
+    const andCondition: Prisma.ScheduleWhereInput[] = []
+
+    if (filterStartDateTime && filterEndDateTime) {
+        andCondition.push({
+            AND: [{
+                startDateTime: {
+                    gte: filterStartDateTime
+                },
+                endDateTime: {
+                    lte: filterEndDateTime
+                },
+            }]
+        })
+    }
+
+    const whereCondition: Prisma.ScheduleWhereInput = andCondition.length > 0 ? {
+        AND: andCondition
+    } : {}
+
+
+    const result = await prisma.schedule.findMany({
+        where: whereCondition
+    });
+
+    const total = await prisma.schedule.count({
+        where: whereCondition
+    })
+
+    return {
+        data: result,
+        meta: {
+            page,
+            limit,
+            total
+        },
+    }
+
+}
+
+
+const deleteSchedule = async (id: string) => {
+    return await prisma.schedule.delete({
+        where: {
+            id: id
+        }
+    })
+}
 
 export const scheduleService = {
-    createSchedule
+    createSchedule,
+    scheduleForDoctor,
+    deleteSchedule
 }
