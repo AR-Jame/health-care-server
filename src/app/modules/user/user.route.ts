@@ -2,6 +2,8 @@ import express, { NextFunction, Request, Response } from "express";
 import { userController } from "./user.controller";
 import { fileUpload } from "../../helper/fileUploader";
 import { userValidation } from "./user.validation";
+import auth from "../../middlewares/auth";
+import { UserRole } from "@prisma/client";
 
 const router = express.Router();
 
@@ -35,6 +37,9 @@ router.post(
     userController.createAdmin
 )
 
-router.get("/", userController.getAllUser)
+router.get("/",
+    auth("ADMIN"),
+    userController.getAllUser
+)
 
 export const userRoutes = router;

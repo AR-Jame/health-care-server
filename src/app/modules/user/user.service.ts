@@ -10,9 +10,10 @@ import { calculatePagination } from "../../helper/paginationHelper";
 const createPatient = async (req: Request) => {
 
     let uploadResult: UploadApiResponse | void;
-
+    console.log(req.file);
     if (req.file) {
         uploadResult = await fileUpload.uploadToCloudinary(req.file);
+        console.log(uploadResult);
     }
 
     const hashedPassword = await bcryptjs.hash(req?.body?.password, 10)
@@ -133,19 +134,31 @@ const getAllUser = async (params: any, options: any) => {
         })
     }
 
-    console.log(andCondition[0].AND);
+    const whereCondition: Prisma.UserWhereInput = andCondition.length > 0 ? {
+        AND: andCondition
+    } : {}
+
     const res = await prisma.user.findMany({
         skip,
         take: limit,
-        where: {
-            AND: andCondition
-        },
+        where: whereCondition,
         orderBy: {
             [sortBy]: sortOrder
         },
-
     });
-    return res;
+
+    const total = await prisma.user.count({
+        where: whereCondition
+    })
+
+    return {
+        data: res,
+        meta: {
+            page,
+            limit,
+            total
+        },
+    };
 }
 
 export const userService = {
