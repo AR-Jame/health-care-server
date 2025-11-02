@@ -22,7 +22,7 @@ const scheduleForDoctor = catchAsync(async (req: Request, res: Response) => {
 
     const filters = pick(req.query, ["startDateTime", "endDateTime"])
 
-    const schedules = await scheduleService.scheduleForDoctor(options, filters)
+    const schedules = await scheduleService.scheduleForDoctor(options, filters, req.user)
 
     sendResponse(res, {
         statusCode: 200,

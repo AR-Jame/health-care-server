@@ -2,6 +2,7 @@ import { addDays, addMinutes, format, isBefore, setHours, setMinutes } from "dat
 import { prisma } from "../../shared/prisma";
 import { calculatePagination } from "../../helper/paginationHelper";
 import { Prisma } from "@prisma/client";
+import { JwtPayload } from "jsonwebtoken";
 
 //********** My problemetic solution */ 
 // const createSchedule = async (payload: any) => {
@@ -151,7 +152,7 @@ const createSchedule = async (payload: any) => {
     return result;
 };
 
-const scheduleForDoctor = async (options: any, filters: any) => {
+const scheduleForDoctor = async (options: any, filters: any, user: JwtPayload) => {
     const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
 
     const { startDateTime: filterStartDateTime, endDateTime: filterEndDateTime } = filters;
@@ -175,13 +176,35 @@ const scheduleForDoctor = async (options: any, filters: any) => {
         AND: andCondition
     } : {}
 
+    const doctorSchedules = await prisma.doctorSchedule.findMany({
+        where: {
+            doctor: {
+                email: user.email
+            },
+        },
+        select: {
+            scheduleId: true
+        }
+    });
+
+    const schedules = doctorSchedules.map(schedule => schedule.scheduleId);
 
     const result = await prisma.schedule.findMany({
-        where: whereCondition
+        where: {
+            ...whereCondition,
+            id: {
+                notIn: schedules
+            }
+        }
     });
 
     const total = await prisma.schedule.count({
-        where: whereCondition
+        where: {
+            ...whereCondition,
+            id: {
+                notIn: schedules
+            }
+        }
     })
 
     return {
