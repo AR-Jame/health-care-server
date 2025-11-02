@@ -6,6 +6,7 @@ import { UserRole } from "@prisma/client";
 const router = Router();
 
 router.post("/",
+    auth(UserRole.ADMIN),
     scheduleController.createSchedule
 )
 
@@ -15,6 +16,7 @@ router.get("/",
 )
 
 router.delete("/:id",
+    auth(UserRole.ADMIN),
     scheduleController.deleteSchedule
 )
 

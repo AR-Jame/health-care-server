@@ -4,7 +4,7 @@ import config from "../../config";
 import { JwtPayload } from "jsonwebtoken";
 
 const auth = (...roles: string[]) => {
-    
+
     return async (req: Request, res: Response, next: NextFunction) => {
 
         try {
@@ -14,7 +14,7 @@ const auth = (...roles: string[]) => {
                 throw new Error("Token does not found. ")
             }
 
-            const verifyUser = jwtHelper.verifyToken(token, config.JWT_ACCESS_SECRET as string);
+            const verifyUser = jwtHelper.verifyToken(token, config.JWT_ACCESS_SECRET as string) as JwtPayload;
 
             req.user = verifyUser;
 

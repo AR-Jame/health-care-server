@@ -4,6 +4,8 @@ import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken"
 import { jwtHelper } from "../../helper/jwt";
 import config from "../../../config";
+import ApiError from "../../error/ApiError";
+import httpStatus from "http-status";
 
 const login = async (payload: { email: string, password: string }) => {
 
@@ -17,7 +19,7 @@ const login = async (payload: { email: string, password: string }) => {
     const isCorrectPassword = await bcryptjs.compare(payload.password, user.password);
 
     if (!isCorrectPassword) {
-        throw new Error("Password is incorrect.")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Password is incorrect.")
     }
 
     const jwtPayload = { email: user.email, role: user.role }

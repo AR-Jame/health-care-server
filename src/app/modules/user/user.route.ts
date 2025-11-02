@@ -19,6 +19,7 @@ router.post(
 
 router.post(
     "/create-doctor",
+        auth(UserRole.ADMIN),
     fileUpload.upload.single("file"),
     (req: Request, res: Response, next: NextFunction) => {
         req.body = userValidation.createDoctorValidationSchema.parse(JSON.parse(req.body.data))
@@ -29,6 +30,7 @@ router.post(
 
 router.post(
     "/create-admin",
+    auth(UserRole.ADMIN),
     fileUpload.upload.single("file"),
     (req: Request, res: Response, next: NextFunction) => {
         req.body = userValidation.createAdminValidationSchema.parse(JSON.parse(req.body.data))
@@ -38,7 +40,7 @@ router.post(
 )
 
 router.get("/",
-    auth("ADMIN"),
+    auth(UserRole.ADMIN),
     userController.getAllUser
 )
 
