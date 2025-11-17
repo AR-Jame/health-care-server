@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
+import { DoctorSpecialties, Prisma } from "@prisma/client";
 import { calculatePagination } from "../../helper/paginationHelper";
 import { doctorSearchableFields } from "./doctor.constant";
 import { prisma } from "../../shared/prisma";
-import util from "util";
+import { IDoctor } from "./doctor.interface";
 
 const getAllDoctor = async (options: any, filters: any) => {
   const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
@@ -34,8 +34,6 @@ const getAllDoctor = async (options: any, filters: any) => {
   const whereConditions: Prisma.DoctorWhereInput =
     andCondition.length > 0 ? { AND: andCondition } : {};
 
-  console.log(util.inspect(whereConditions, { depth: null }));
-
   const result = await prisma.doctor.findMany({
     where: whereConditions,
     skip,
@@ -57,6 +55,70 @@ const getAllDoctor = async (options: any, filters: any) => {
   };
 };
 
+const updateDoctor = async (id: string, payload: Partial<IDoctor>) => {
+  console.log(id);
+
+  const doctorInfo = await prisma.doctor.findUniqueOrThrow({
+    where: {
+      id,
+    },
+  });
+
+  const { specialties, ...doctorData } = payload;
+
+  // Here we use transaction rollback 
+
+  return await prisma.$transaction(async (tnx) => {
+    if (specialties && specialties.length > 0) {
+      const deleteSpecialty: string[] = [];
+      const createSpecialty: DoctorSpecialties[] = [];
+
+      specialties.forEach((specialty) => {
+        if (specialty.isDeleted) {
+          deleteSpecialty.push(specialty.id);
+        } else {
+          createSpecialty.push({
+            specialtiesId: specialty.id,
+            doctorId: id,
+          });
+        }
+      });
+
+      if (deleteSpecialty.length > 0) {
+        await tnx.doctorSpecialties.deleteMany({
+          where: {
+            doctorId: id,
+            specialtiesId: {
+              in: deleteSpecialty,
+            },
+          },
+        });
+      }
+
+      if (createSpecialty.length > 0) {
+        await tnx.doctorSpecialties.createMany({
+          data: createSpecialty,
+        });
+      }
+    }
+
+    const updatedData = await tnx.doctor.update({
+      where: {
+        id: doctorInfo.id,
+      },
+      include: {
+        doctorSpecialties: {
+          include: { specialties: true },
+        },
+      },
+      data: doctorData,
+    });
+
+    return updatedData;
+  });
+};
+
 export const doctorServices = {
   getAllDoctor,
+  updateDoctor,
 };
