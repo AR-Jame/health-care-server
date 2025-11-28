@@ -22,6 +22,21 @@ const getAllDoctor = async (options: any, filters: any) => {
     });
   }
 
+  if (specialties) {
+    andCondition.push({
+      doctorSpecialties: {
+        some: {
+          specialties: {
+            title: {
+              contains: specialties,
+              mode: "insensitive",
+            },
+          },
+        },
+      },
+    });
+  }
+
   if (Object.keys(filterData).length > 0) {
     const filterConditions = Object.keys(filterData).map((key) => ({
       [key]: {
@@ -41,6 +56,13 @@ const getAllDoctor = async (options: any, filters: any) => {
     orderBy: {
       [sortBy]: sortOrder,
     },
+    include: {
+      doctorSpecialties: {
+        include: {
+          specialties: true,
+        },
+      },
+    },
   });
 
   const total = await prisma.doctor.count({ where: whereConditions });
@@ -55,6 +77,23 @@ const getAllDoctor = async (options: any, filters: any) => {
   };
 };
 
+const getDoctorById = async (id: string) => {
+  const result = await prisma.doctor.findUnique({
+    where: {
+      id: id,
+    },
+    include: {
+      doctorSpecialties: {
+        include: {
+          specialties: true,
+        },
+      },
+    },
+  });
+
+  return result;
+};
+
 const updateDoctor = async (id: string, payload: Partial<IDoctor>) => {
   console.log(id);
 
@@ -66,7 +105,7 @@ const updateDoctor = async (id: string, payload: Partial<IDoctor>) => {
 
   const { specialties, ...doctorData } = payload;
 
-  // Here we use transaction rollback 
+  // Here we use transaction rollback
 
   return await prisma.$transaction(async (tnx) => {
     if (specialties && specialties.length > 0) {
@@ -118,7 +157,21 @@ const updateDoctor = async (id: string, payload: Partial<IDoctor>) => {
   });
 };
 
+const deleteDoctor = async (id: string) => {
+  // TODO: we have to sync doctor schedule before doctor deletion.
+
+  const result = await prisma.doctor.delete({
+    where: {
+      id: id,
+    },
+  });
+
+  return result;
+};
+
 export const doctorServices = {
   getAllDoctor,
   updateDoctor,
+  deleteDoctor,
+  getDoctorById,
 };
