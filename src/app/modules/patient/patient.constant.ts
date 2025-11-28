@@ -1,0 +1,1 @@
+export const patientSearchableFields = ["name", "email", "address"]
