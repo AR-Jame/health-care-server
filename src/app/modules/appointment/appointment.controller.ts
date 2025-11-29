@@ -4,8 +4,8 @@ import sendResponse from "../../shared/sendResponse";
 import { appointmentService } from "./appointment.service";
 
 const createAppointment = catchAsync(async (req: Request, res: Response) => {
-  console.log(req.user);
-  const result = await appointmentService.createAppointment();
+  const { user, body } = req;
+  const result = await appointmentService.createAppointment({ user, body });
   sendResponse(res, {
     statusCode: 201,
     success: true,
