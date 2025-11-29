@@ -43,6 +43,7 @@ const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
 const getDoctorById = catchAsync(async (req: Request, res: Response) => {
   const { doctorId } = req.params;
   const result = await doctorServices.getDoctorById(doctorId as string);
@@ -54,9 +55,21 @@ const getDoctorById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAISuggestion = catchAsync(async (req: Request, res: Response) => {
+  const { symptoms } = req.body;
+  const result = await doctorServices.getAISuggestion(symptoms);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Doctor suggestion generated successfully",
+    data: result,
+  });
+});
+
 export const doctorController = {
   getAllDoctor,
   updateDoctor,
   deleteDoctor,
   getDoctorById,
+  getAISuggestion,
 };

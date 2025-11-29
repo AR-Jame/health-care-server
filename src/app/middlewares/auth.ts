@@ -2,31 +2,32 @@ import { NextFunction, Request, Response } from "express";
 import { jwtHelper } from "../helper/jwt";
 import config from "../../config";
 import { JwtPayload } from "jsonwebtoken";
+import { UserRole } from "@prisma/client";
 
-const auth = (...roles: string[]) => {
+const auth = (...roles: UserRole[]) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const token = req.cookies.accessToken;
 
-    return async (req: Request, res: Response, next: NextFunction) => {
+      if (!token) {
+        throw new Error("Token does not found. ");
+      }
 
-        try {
-            const token = req.cookies.accessToken;
+      const verifyUser = jwtHelper.verifyToken(
+        token,
+        config.JWT_ACCESS_SECRET as string
+      ) as JwtPayload;
 
-            if (!token) {
-                throw new Error("Token does not found. ")
-            }
+      req.user = verifyUser;
 
-            const verifyUser = jwtHelper.verifyToken(token, config.JWT_ACCESS_SECRET as string) as JwtPayload;
+      if (roles && !roles.includes(verifyUser?.role)) {
+        throw new Error("You are not authorized!");
+      }
 
-            req.user = verifyUser;
-
-            if (roles && !roles.includes(verifyUser?.role)) {
-                throw new Error("You are not authorized!")
-            }
-
-            next();
-
-        } catch (error) {
-            next(error)
-        }
+      next();
+    } catch (error) {
+      next(error);
     }
-}
+  };
+};
 export default auth;
