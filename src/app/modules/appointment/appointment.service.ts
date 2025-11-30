@@ -1,6 +1,7 @@
 import { JwtPayload } from "jsonwebtoken";
 import { prisma } from "../../shared/prisma";
 import crypto from "crypto";
+import { stripe } from "../../helper/stripe";
 const createAppointment = async ({
   user,
   body,
@@ -52,7 +53,7 @@ const createAppointment = async ({
       },
     });
 
-    await tnx.payment.create({
+    const paymentData = await tnx.payment.create({
       data: {
         appointmentId: appointmentData.id,
         amount: doctorData.appointmentFee,
@@ -60,7 +61,32 @@ const createAppointment = async ({
       },
     });
 
-    return appointmentData;;
+    /*     PAYMENT INIT   */
+    const session = await stripe.checkout.sessions.create({
+      customer_email: user.email,
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Appointment with Dr. Firoz.",
+            },
+            unit_amount: doctorData.appointmentFee * 100,
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        appointmentId: appointmentData.id,
+        paymentId: paymentData.id,
+      },
+      success_url: `https://youtube.com?success=true`,
+      cancel_url: "http://programming-hero.com?success=false",
+    });
+
+    return { paymentUrl: session.url };
   });
 
   return result;
