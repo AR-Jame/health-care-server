@@ -23,7 +23,7 @@ const login = async (payload: { email: string, password: string }) => {
     }
 
     const jwtPayload = { email: user.email, role: user.role }
-    const accessToken = jwtHelper.generateToken(jwtPayload, config.JWT_ACCESS_SECRET as string, "1hr")
+    const accessToken = jwtHelper.generateToken(jwtPayload, config.JWT_ACCESS_SECRET as string, "10hr")
     const refreshToken = jwtHelper.generateToken(jwtPayload, config.JWT_REFRESH_SECRET as string, "90d")
 
     return {

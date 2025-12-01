@@ -11,4 +11,16 @@ router.post(
   appointmentController.createAppointment
 );
 
+router.get(
+  "/",
+  auth(UserRole.PATENT, UserRole.DOCTOR),
+  appointmentController.getAppointments
+);
+
+router.patch(
+  "/:id",
+  auth(UserRole.ADMIN, UserRole.DOCTOR),
+  appointmentController.updateAppointmentStatus
+);
+
 export const appointmentRoutes = router;

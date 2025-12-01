@@ -2,6 +2,10 @@ import { JwtPayload } from "jsonwebtoken";
 import { prisma } from "../../shared/prisma";
 import crypto from "crypto";
 import { stripe } from "../../helper/stripe";
+import { calculatePagination } from "../../helper/paginationHelper";
+import { Prisma, UserRole } from "@prisma/client";
+import ApiError from "../../error/ApiError";
+
 const createAppointment = async ({
   user,
   body,
@@ -92,6 +96,85 @@ const createAppointment = async ({
   return result;
 };
 
+const getAppointments = async ({ user, filters, options }: any) => {
+  const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
+
+  const andCondition: Prisma.AppointmentWhereInput[] = [];
+
+  if (user.role === UserRole.DOCTOR) {
+    andCondition.push({
+      doctor: {
+        email: user.email,
+      },
+    });
+  } else if (user.role === UserRole.PATENT) {
+    andCondition.push({
+      patient: {
+        email: user.email,
+      },
+    });
+  }
+
+  if (Object.keys(filters).length > 0) {
+    const filterCondition = Object.keys(filters).map((key) => ({
+      [key]: {
+        equals: filters[key],
+      },
+    }));
+
+    andCondition.push(...filterCondition);
+  }
+
+  const whereConditions: Prisma.AppointmentWhereInput =
+    andCondition.length > 0 ? { AND: andCondition } : {};
+
+  const result = await prisma.appointment.findMany({
+    where: whereConditions,
+    include:
+      user.role === UserRole.DOCTOR ? { patient: true } : { doctor: true },
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+    skip: skip,
+    take: limit,
+  });
+
+  const total = await prisma.appointment.count({ where: whereConditions });
+
+  return {
+    data: result,
+    meta: { page, limit, total },
+  };
+};
+
+const updateAppointmentStatus = async ({
+  appointmentId,
+  status,
+  user,
+}: any) => {
+  const appointmentData = await prisma.appointment.findUniqueOrThrow({
+    where: { id: appointmentId },
+    include: { patient: true },
+  });
+
+  if (user.role === UserRole.PATENT) {
+    if (user.role !== appointmentData.patient.email) {
+      throw new ApiError(500, "It's not your appointment");
+    }
+  }
+
+  const updateData = await prisma.appointment.update({
+    where: { id: appointmentId },
+    data: {
+      status: status,
+    },
+  });
+
+  return updateData;
+};
+
 export const appointmentService = {
   createAppointment,
+  getAppointments,
+  updateAppointmentStatus,
 };

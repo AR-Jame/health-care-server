@@ -37,7 +37,7 @@ const stripeWebhook = async (event: Stripe.Event) => {
     default:
       console.log(`Unhandled event type: ${event.type}`);
   }
-};
+}
 
 export const paymentService = {
   stripeWebhook,
