@@ -33,6 +33,8 @@ const createPrescription = async ({ user, payload }: any) => {
   return result;
 };
 
+//
+
 export const prescriptionService = {
   createPrescription,
 };
