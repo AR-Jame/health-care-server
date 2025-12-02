@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { calculatePagination } from "../../helper/paginationHelper";
 import { prisma } from "../../shared/prisma";
 import { patientSearchableFields } from "./patient.constant";
+import { JwtPayload } from "jsonwebtoken";
 
 const getAllPatient = async ({ options, filters }: any) => {
   const { sortBy, sortOrder, limit, page, skip } = calculatePagination(options);
@@ -63,16 +64,49 @@ const getPatientById = async (id: string) => {
   return result;
 };
 
-const updatePatient = async (
-  id: string,
-  payload: Prisma.PatientUncheckedUpdateInput
-) => {
-  const result = await prisma.patient.update({
-    where: { id },
-    data: payload,
+const updatePatient = async (user: JwtPayload, payload: any) => {
+  const { patientHealthData, medicalReport, ...patientData } = payload;
+
+  const patientInfo = await prisma.patient.findUniqueOrThrow({
+    where: { email: user.email, isDeleted: false },
   });
 
-  return result;
+  return await prisma.$transaction(async (tnx) => {
+    await tnx.patient.update({
+      where: { id: patientInfo.id },
+      data: patientData,
+    });
+
+    if (patientHealthData) {
+      await tnx.patientHealthData.upsert({
+        where: {
+          patientId: patientInfo.id,
+        },
+        update: patientHealthData,
+        create: {
+          ...patientHealthData,
+          patientId: patientInfo.id,
+        },
+      });
+    }
+
+    if (medicalReport) {
+      await tnx.medicalReport.create({
+        data: {
+          ...medicalReport,
+          patientId: patientInfo.id,
+        },
+      });
+    }
+
+    return await prisma.patient.findUniqueOrThrow({
+      where: { id: patientInfo.id },
+      include: {
+        patientHealthData: true,
+        medicalReports: true,
+      },
+    });
+  });
 };
 
 const deletePatient = async (id: string) => {
@@ -89,5 +123,5 @@ export const patientService = {
   getAllPatient,
   getPatientById,
   deletePatient,
-  updatePatient
+  updatePatient,
 };

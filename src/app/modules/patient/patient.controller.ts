@@ -41,10 +41,9 @@ const getPatientById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updatePatient = catchAsync(async (req: Request, res: Response) => {
-  const { patientId } = req.params;
-
+  const user = req.user;
   const result = await patientService.updatePatient(
-    patientId as string,
+    user,
     req.body
   );
   sendResponse(res, {
