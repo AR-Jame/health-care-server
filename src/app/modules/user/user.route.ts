@@ -8,40 +8,45 @@ import { UserRole } from "@prisma/client";
 const router = express.Router();
 
 router.post(
-    "/create-patient",
-    fileUpload.upload.single("file"),
-    (req: Request, res: Response, next: NextFunction) => {
-        req.body = userValidation.createPatientValidationSchema.parse(JSON.parse(req.body?.data))
-        next()
-    },
-    userController.createPatient
+  "/create-patient",
+  fileUpload.upload.single("file"),
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body = userValidation.createPatientValidationSchema.parse(
+      JSON.parse(req.body?.data)
+    );
+    next();
+  },
+  userController.createPatient
 );
 
 router.post(
-    "/create-doctor",
-        auth(UserRole.ADMIN),
-    fileUpload.upload.single("file"),
-    (req: Request, res: Response, next: NextFunction) => {
-        req.body = userValidation.createDoctorValidationSchema.parse(JSON.parse(req.body.data))
-        next()
-    },
-    userController.createDoctor
-)
+  "/create-doctor",
+  auth(UserRole.ADMIN),
+  fileUpload.upload.single("file"),
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body = userValidation.createDoctorValidationSchema.parse(
+      JSON.parse(req.body.data)
+    );
+    next();
+  },
+  userController.createDoctor
+);
 
 router.post(
-    "/create-admin",
-    auth(UserRole.ADMIN),
-    fileUpload.upload.single("file"),
-    (req: Request, res: Response, next: NextFunction) => {
-        req.body = userValidation.createAdminValidationSchema.parse(JSON.parse(req.body.data))
-        next()
-    },
-    userController.createAdmin
-)
+  "/create-admin",
+  auth(UserRole.ADMIN),
+  fileUpload.upload.single("file"),
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body = userValidation.createAdminValidationSchema.parse(
+      JSON.parse(req.body.data)
+    );
+    next();
+  },
+  userController.createAdmin
+);
 
-router.get("/",
-    auth(UserRole.ADMIN),
-    userController.getAllUser
-)
+router.get("/", auth(UserRole.ADMIN), userController.getAllUser);
+
+router.patch("/status", auth(UserRole.ADMIN), userController.changeProfileStatus);
 
 export const userRoutes = router;

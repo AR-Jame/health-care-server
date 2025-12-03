@@ -87,10 +87,22 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMe = catchAsync(async (req: Request, res: Response) => {
+  const result = await authService.getMe(req.user);
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Profile retrieved successfully",
+    data: result,
+  });
+});
+
 export const authController = {
   login,
   refreshToken,
   changePassword,
   forgetPassword,
   resetPassword,
+  getMe,
 };

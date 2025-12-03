@@ -6,6 +6,8 @@ import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import router from "./app/routes";
 import cookieParser from "cookie-parser";
 import { paymentRoutes } from "./app/modules/payment/payment.route";
+import cron from "node-cron";
+import { appointmentService } from "./app/modules/appointment/appointment.service";
 
 const app: Application = express();
 
@@ -23,6 +25,14 @@ app.use("/api/v1/payment", paymentRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Cron job for deleteing unpaid appointments
+cron.schedule("* * * * *", () => {
+  try {
+    appointmentService.cancelUnpaidAppointment();
+  } catch (error) {}
+});
+
 
 app.use("/api/v1", router);
 

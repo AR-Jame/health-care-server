@@ -151,10 +151,24 @@ const resetPassword = async ({ token, payload }: any) => {
   return true;
 };
 
+const getMe = async (user: any) => {
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: user.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  const { password, ...rest } = userData;
+
+  return rest;
+};
+
 export const authService = {
   login,
   refreshToken,
   changePassword,
   forgetPassword,
   resetPassword,
+  getMe,
 };
